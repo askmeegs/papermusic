@@ -1,0 +1,5 @@
+opencv-python
+scamp
+python-rtmidi
+scamp_extensions
+google-generativeai
