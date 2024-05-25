@@ -2,10 +2,17 @@ import cv2
 from scamp import *
 import os
 import google.generativeai as genai
+import time
 
+# gemini config
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
+# Scamp (music generation) config
+s = Session()
 
+s.timing_policy = 0.7
+
+# note to midi mapping. the following basic notes are supported:
 nm = {
     "C4": 60,
     "C#4": 61,
@@ -47,20 +54,31 @@ nm = {
 }
 
 
+# helper function: uploads an image to Gemini
 def upload_to_gemini(path, mime_type=None):
     file = genai.upload_file(path, mime_type=mime_type)
     print(f"Uploaded file '{file.display_name}' as: {file.uri}")
     return file
 
 
+# the initial call to Gemini is:
 # given a drawing of a musical instrument, ask Gemini to identify it
 def identify_instrument():
-    image = upload_to_gemini("instruments/test1.png", mime_type="image/png")
+    # wait 2 seconds, then capture a single webcam frame.
+    time.sleep(2)
+    cap = cv2.VideoCapture(0)
+    ret, frame = cap.read()
+    fp = "framecapture/webcam_instrument.jpg"
+    cv2.imwrite(fp, frame)
+    cap.release()
+    cv2.destroyAllWindows()
+
+    # ask Gemini what it sees
+    image = upload_to_gemini(fp, mime_type="image/png")
     generation_config = {
-        "temperature": 0.3,
+        "temperature": 0.5,
         "top_p": 0.95,
-        "top_k": 64,
-        "max_output_tokens": 8192,
+        "max_output_tokens": 100,
         "response_mime_type": "text/plain",
     }
     model = genai.GenerativeModel(
@@ -74,88 +92,15 @@ def identify_instrument():
             "role": "user",
             "parts": [
                 image,
-                'here is a picture of a musical instrument. in one word, without punctuation, identify what musical instrument this might be. if you aren\'t sure, say "music box." ',
+                "Here is a picture of a musical instrument. in one or two words, without punctuation, identify what musical instrument this might be. If you aren't sure, return the name of a random, fun instrument.",
             ],
         }
     )
-    print("🔮 gemini flash thinks the drawing is: " + response.text)
-    return response.text, image
-
-
-# ask gemini to identify the number of playable notes in the drawing of the instrument
-def id_instrument_range(image):
-    generation_config = {
-        "temperature": 0.3,
-        "top_p": 0.95,
-        "top_k": 64,
-        "max_output_tokens": 8192,
-        "response_mime_type": "text/plain",
-    }
-    model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash",
-        generation_config=generation_config,
-    )
-    chat_session = model.start_chat()
-
-    response = chat_session.send_message(
-        {
-            "role": "user",
-            "parts": [
-                image,
-                "identify the playable notes for this instrument. The range of notes can be from C4 to C7, C4 being the lowest, C7 the highest. Include sharps, for instance, F# should always follow F. Return the notes as a list of comma separated notes. Return nothing else except that list. This is an example, but don't return this exact list: C4, D4, E4. Return the list of notes based on the image of the instrument.",
-            ],
-        }
-    )
-    # post process, convert to list of strings
-    output = response.text.split(", ")
-    print("🎼 gemini identified the range: {}".format(output))
-    return output
-
-
-def test_range(inst, inst_range):
-    print("TESTING THE RANGE....")
-    for r in inst_range:
-        if r in nm:
-            inst.play_note(nm[r], 0.8, 0.5)
-        else:
-            print("⚠️ unrecognized note {}, skipping".format(r))
-
-
-def play_instrument(inst, inst_id, inst_range, filepath):
-    image = upload_to_gemini(filepath, mime_type="image/png")
-    generation_config = {
-        "temperature": 0.3,
-        "top_p": 0.95,
-        "top_k": 64,
-        "max_output_tokens": 8192,
-        "response_mime_type": "text/plain",
-    }
-    model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash",
-        generation_config=generation_config,
-    )
-    chat_session = model.start_chat()
-
-    response = chat_session.send_message(
-        {
-            "role": "user",
-            "parts": [
-                image,
-                "the user is playing the instrument: {}. they are playing one note on this instrument. the range of possible notes are: {}. return the note they are most likely playing. return a single note in a format like this: C4".format(
-                    inst_id, inst_range
-                ),
-            ],
-        }
-    )
-    if response.text in nm:
-        inst.play_note(nm[response.text], 0.8, 1)
-    else:
-        print("🎻 unrecognized note {}, skipping".format(response.text))
+    return response.text.strip()
 
 
 # init a synthesizer based on the identified instrument
 def create_instrument(name: str):
-    s = Session()
     try:
         inst = s.new_part(name)
         print("found matching preset instrument")
@@ -166,55 +111,139 @@ def create_instrument(name: str):
         return inst
 
 
-def play(inst, notename):
-    try:
-        print("playing note: {}".format(notename))
-        inst.play_note(nm[notename], 0.8, 0.5)
-    except:
-        print("⚠️ unrecognized note {}, skipping".format(notename))
+# ask gemini to identify the number of playable notes in the drawing of the instrument
+def create_instrument_range():
+    fp = "framecapture/webcam_instrument.jpg"
+    image = upload_to_gemini(fp, mime_type="image/png")
+
+    generation_config = {
+        "temperature": 0.5,
+        "top_p": 0.95,
+        "max_output_tokens": 100,
+        "response_mime_type": "text/plain",
+    }
+    model = genai.GenerativeModel(
+        model_name="gemini-1.5-flash",
+        generation_config=generation_config,
+    )
+    chat_session = model.start_chat()
+
+    response = chat_session.send_message(
+        {
+            "role": "user",
+            "parts": [
+                image,
+                "Identify the range of playable notes for this instrument. Even if the drawing doesn't look like an instrument, treat it like it is, in fact, an instrument. The range of POSSIBLE notes can be from C4 to C7, C4 being the lowest, C7 the highest- but you don't have to include every note in the range- start at C4 and see how far you get. Every part of the instrument - like one key, one fret, one shape - should represent exactly one note. Don't create more than 10 notes. Always include sharps: for instance, F# should always follow F. Don't include flats- for instance, return F# but don't return Gb. Examples: if you see a piano, return the notes for both the black and white keys. If you see the strings of an instrument, return not just the list of open strings, but the notes that can be played on each string. If you see something that doesn't look like an instrument, return a list of notes anyway, that could map to the parts of the image. Output: Return the notes as a list of comma separated notes. Return nothing else except that list of notes.",
+            ],
+        }
+    )
+    # post process, convert to list of strings
+    output = response.text.split(", ")
+    output = [x.strip() for x in output]
+    print("🎼 gemini identified the range: {}".format(output))
+    return output
+
+
+def test_range(inst, inst_range):
+    for r in inst_range:
+        if r in nm:
+            # play_note(note, volume, duration_beats)
+            inst.play_note(nm[r], 1, 0.4)
+        else:
+            print("⚠️ unrecognized note {}, skipping".format(r))
+
+
+# given a frame where the user is pointing at a note on the instrument,
+# ask Gemini to identifty what note they're playing, then have the synth play it.
+def identify_and_play_note(inst, inst_id, inst_range, filepath):
+    print("Identifying: {}".format(filepath))
+    image = upload_to_gemini(filepath, mime_type="image/png")
+    generation_config = {
+        "temperature": 0.7,
+        "top_p": 0.95,
+        "max_output_tokens": 20,
+        "response_mime_type": "text/plain",
+    }
+    model = genai.GenerativeModel(
+        model_name="gemini-1.5-flash",
+        generation_config=generation_config,
+    )
+    chat_session = model.start_chat()
+
+    prompt = "I am playing this instrument: {}. I am playing one note on this instrument by placing a green square around the note. Play the note representing the spot I'm pointing at. The range of possible notes are (from lowest, to highest): {}. Given that specific range, return the value of note I am pointing to. Return a single note in a format like this: C4. If you aren't sure, or if there's no hand in the picture pointing at something, say Not Sure.".format(
+        inst_id, inst_range
+    )
+
+    response = chat_session.send_message(
+        {
+            "role": "user",
+            "parts": [
+                image,
+                prompt,
+            ],
+        }
+    )
+    note_id = response.text
+    # strip all whitespace and punctuation from string
+    note_id = note_id.strip().replace(" ", "").replace(",", "").replace(".", "")
+    print("Gemini sees: {}".format(note_id))
+    if note_id in ["C", "D", "E", "F", "G", "A", "B"]:
+        note_id += "4"
+    if note_id in nm:
+        inst.play_note(nm[note_id], 1, 2)
+    else:
+        print("🤔 unrecognized note {}, playing silence".format(response.text))
 
 
 def papermusic():
-    # print multiline str
     print(
         """
-        🎹  🎹      🎹    🎹  🎹  🎹  🎹      🎹    🎹  🎹
+🎹 🎹 🎹 🎹 🎹 🎹 🎹 🎹 🎹 🎹 
 ┌─┐┌─┐┌─┐┌─┐┬─┐┌┬┐┌┐┌┬ ┬┌─┐┬┌─┐
 ├─┘├─┤├─┘├┤ ├┬┘│││││││ │└─┐││  
 ┴  ┴ ┴┴  └─┘┴└─┴ ┴┘└┘└─┘└─┘┴└─┘
-        ✏️  ✏️  ✏️   ✏️  ✏️  ✏️   ✏️  ✏️  ✏️
+ ✏️  ✏️  ✏️  ✏️  ✏️  ✏️  ✏️  ✏️  ✏️  ✏️
           """
     )
-    inst_id, image = identify_instrument()
+
+    print("👀 Identifying the instrument...")
+    inst_id = identify_instrument()
+
+    print("🔮 Gemini sees: {}. Initializing synthesizer...".format(inst_id))
     inst = create_instrument(inst_id)
-    inst_range = id_instrument_range(image)
+    inst_range = create_instrument_range()
+
+    # print("🔊 Your instrument can play these notes...")
     # test_range(inst, inst_range)
 
-    play_instrument(inst, inst_id, inst_range, "notes/piano_note1.png")
-    play_instrument(inst, inst_id, inst_range, "notes/piano_note2.png")
-    play_instrument(inst, inst_id, inst_range, "notes/piano_note3.png")
-
-    # inst.play_note(60, 0.8, 0.5)
-    # inst.play_note(67, 0.8, 0.5)
-    # inst.play_note(64, 0.8, 0.5)
-    # cap = cv2.VideoCapture(0)  # 0 is the default webcam
-    # count = 0
-    # fps = int(cap.get(cv2.CAP_PROP_FPS))  # Get frames per second
-
-    # while cap.isOpened():
-    #     ret, frame = cap.read()
-    #     if ret:
-    #         if count % fps == 0:  # Capture frame every second
-    #             cv2.imwrite("framecapture/{:d}.jpg".format(count // fps), frame)
-    #  play_instrument
-    #         count += 1
-    #         if cv2.waitKey(1) & 0xFF == ord("q"):  # Press 'q' to quit
-    #             break
-    #     else:
-    #         break
-
-    # cap.release()
-    # cv2.destroyAllWindows()
+    print("🎵 Now play!")
+    try:
+        while True:
+            cap = cv2.VideoCapture(0)
+            count = 0
+            fps = int(cap.get(cv2.CAP_PROP_FPS))
+            while cap.isOpened():
+                ret, frame = cap.read()
+                if ret:
+                    # capture 1 frame every 500 ms
+                    if count % (fps // 2) == 0:
+                        fp = "framecapture/{}.jpg".format(time.time())
+                        cv2.imwrite(fp, frame)
+                        identify_and_play_note(inst, inst_id, inst_range, fp)
+                    count += 1
+                    if cv2.waitKey(1) & 0xFF == ord("q"):
+                        break
+                else:
+                    break
+    except KeyboardInterrupt:
+        print("👋 Quitting...")
+        cap.release()
+        cv2.destroyAllWindows()
+        # clean up webcam image files
+        files = os.listdir("framecapture")
+        for f in files:
+            if f != "README.md":
+                os.remove("framecapture/" + f)
 
 
 if __name__ == "__main__":
