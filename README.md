@@ -2,6 +2,8 @@
 
 draw an instrument, and play it?
 
+![](images/screenshot.png)
+
 ### sources:
 
 - [SCAMP (Suite for Computer-Assisted Music in Python)](http://scamp.marcevanstein.com/)
