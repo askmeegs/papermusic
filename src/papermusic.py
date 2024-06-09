@@ -5,7 +5,7 @@ import google.generativeai as genai
 import time
 
 # gemini config
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+genai.configure(api_key=os.environ["GEMINI_DEV_API_KEY"])
 
 # Scamp (music generation) config
 s = Session()
