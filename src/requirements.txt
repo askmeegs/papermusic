@@ -2,4 +2,12 @@ opencv-python
 scamp
 python-rtmidi
 scamp_extensions
-google-generativeai
+transformers
+torch
+pillow
+requests
+swarms
+termcolor
+setuptools
+bitsandbytes
+accelerate
