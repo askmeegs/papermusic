@@ -208,6 +208,7 @@ def papermusic():
  ✏️  ✏️  ✏️  ✏️  ✏️  ✏️  ✏️  ✏️  ✏️  ✏️
           """
     )
+    # ffmpeg -i udp://localhost:8000 -c copy output.mp4
     cap = cv2.VideoCapture("udp://@:8000")
     _, frame = cap.read()
     fp = "framecapture/stream.jpg"
