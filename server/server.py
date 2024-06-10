@@ -42,8 +42,9 @@ model = PaliGemmaForConditionalGeneration.from_pretrained(
     model_id,
     quantization_config=bnb_config,
     device_map={"": 0},
+    token=hf_token,
 )
-processor = AutoProcessor.from_pretrained(model_id)
+processor = AutoProcessor.from_pretrained(model_id, token=hf_token)
 
 
 # source:
