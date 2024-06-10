@@ -12,6 +12,10 @@ from PIL import Image
 from transformers import BitsAndBytesConfig
 from swarms import BaseMultiModalModel
 
+# verify CUDA (Nvidia GPU) is available
+if not torch.cuda.is_available():
+    print("🚫 No CUDA device available.")
+    sys.exit()
 
 # configure server info to listen on websocket
 host = "0.0.0.0"
