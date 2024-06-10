@@ -89,7 +89,63 @@ def play_note(img_path):
     print(response.text)
 
 
-def listen():
+# for the first 5 seconds, listen for the instrument webcam frames ...
+def listen_for_instrument():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind((host, port))
+    frame_info = None
+    buffer = None
+    frame = None
+    first_receipt = False
+    j = 0
+    print("🎹 Listening UDP for instrument on {}:{}...".format(host, port))
+
+    start_time = time.time()
+
+    while True:
+        try:
+            data, address = sock.recvfrom(max_length)
+            if len(data) < 100:
+                frame_info = pickle.loads(data)
+                if frame_info:
+                    if first_receipt == False:
+                        print("✅ Received stream.")
+                        first_receipt = True
+                    nums_of_packs = frame_info["packs"]
+                    j += 1
+                    for i in range(nums_of_packs):
+                        data, address = sock.recvfrom(max_length)
+
+                        if i == 0:
+                            buffer = data
+                        else:
+                            buffer += data
+
+                    frame = np.frombuffer(buffer, dtype=np.uint8)
+                    frame = frame.reshape(frame.shape[0], 1)
+
+                    frame = cv2.imdecode(frame, cv2.IMREAD_COLOR)
+                    frame = cv2.flip(frame, 1)
+
+                    if frame is not None and type(frame) == np.ndarray:
+                        if cv2.waitKey(1) == 27:
+                            break
+                    # if i is a multiple of 10, save frame
+                    if j % 10 == 0:
+                        cv2.imwrite(f"framecapture/frame_{j}.jpg", frame)
+                        resp = identify_instrument(f"framecapture/frame_{j}.jpg")
+                        print(resp)
+                        if "success" in resp:
+                            print("🎹 Identified instrument: ", resp)
+                            break
+
+            # Break the loop after 5 seconds
+            if time.time() - start_time > 5:
+                print("⏲️ Instrument ID TIMEOUT")
+                break
+
+# then afterwards, listen for frames of notes being played, until quit
+def listen_for_notes():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((host, port))
 
@@ -133,7 +189,9 @@ def listen():
                     # if i is a multiple of 10, save frame
                     if j % 10 == 0:
                         # print("🗳️ saving frame {}".format(j))
-                        cv2.imwrite(f"framecapture/frame_{j}.jpg", frame)
+                        cv2.imwrite(f"framecapture/frame_{j}.jpg", frame) 
+                        resp = play_note(f"framecapture/frame_{j}.jpg")
+                        print(resp)
         except KeyboardInterrupt:
             cleanup_and_exit(None, None)
 

@@ -81,10 +81,14 @@ def instrument(i: Instrument):
         i = s.new_part(i.name)
         inst_name = i.name
         print("⭐ found matching preset instrument: {}".format(i.name))
-        return {"response": "instrument {} initialized.".format(i.name)}
+        return {"response": "success - instrument {} initialized.".format(i.name)}
     except:
         print("🤔 unrecognized instrument {}, using default.".format(i.name))
-        return {"response": "unrecognized instrument {}, using default.".format(i.name)}
+        return {
+            "response": "success - unrecognized instrument {}, using default.".format(
+                i.name
+            )
+        }
 
 
 # ------------- HANDLE PLAYED NOTES --------------------------
@@ -102,9 +106,14 @@ def playnote(n: Note):
         midinote = nm[note_id]
         # https://scamp.marcevanstein.com/narrative/note_properties.html
         inst.play_note(midinote, 1, 1, {"articulations": ["staccato"]})
-
+        return {"response": "success - note {} played.".format(note_id)}
     else:
         print("🤔 unrecognized note {}, playing silence".format(note_id))
+        return {
+            "response": "success - unrecognized note {}, playing silence".format(
+                note_id
+            )
+        }
 
 
 def init():
