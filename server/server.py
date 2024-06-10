@@ -14,8 +14,8 @@ max_length = 10000
 
 def cleanup_and_exit(signal_number, frame):
     print("👋 Quitting server...")
-    for file in os.listdir("framecapture"):
-        os.remove(f"framecapture/{file}")
+    # for file in os.listdir("framecapture"):
+    #     os.remove(f"framecapture/{file}")
     sys.exit()
 
 
