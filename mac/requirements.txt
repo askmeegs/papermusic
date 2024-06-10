@@ -4,3 +4,4 @@ scamp_extensions
 python-rtmidi
 requests
 fastapi
+pydantic

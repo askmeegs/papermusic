@@ -11,6 +11,8 @@ from transformers import PaliGemmaForConditionalGeneration, AutoProcessor
 from PIL import Image
 from transformers import BitsAndBytesConfig
 from swarms import BaseMultiModalModel
+import requests
+import json
 
 # verify CUDA (Nvidia GPU) is available
 if not torch.cuda.is_available():
@@ -25,8 +27,8 @@ max_length = 10000
 
 def cleanup_and_exit(signal_number, frame):
     print("👋 Quitting server...")
-    # for file in os.listdir("framecapture"):
-    #     os.remove(f"framecapture/{file}")
+    for file in os.listdir("framecapture"):
+        os.remove(f"framecapture/{file}")
     sys.exit()
 
 
@@ -58,6 +60,33 @@ def inference_paligemma(prompt, img_path):
     inputs = processor(prompt, raw_image, return_tensors="pt")
     output = model.generate(**inputs, max_new_tokens=50)
     return processor.decode(output[0], skip_special_tokens=True)[len(prompt) :]
+
+
+# runs in the first 5 seconds of stream-receive
+def identify_instrument(img_path):
+    instrument = inference_paligemma(
+        "Identify the musical instrument using 1-2 words", img_path
+    )
+    url = "http://96.224.255.115:8000/note"
+    headers = {"Content-Type": "application/json"}
+    data = {"name": instrument}
+    print("\n⬅️ Attempting to play note: ", n)
+    response = requests.post(url, headers=headers, data=json.dumps(data))
+    print(response.text)
+
+
+# once instrument is ID-ed, play notes based on green square surrounding note on paper instrument
+def play_note(img_path):
+    n = inference_paligemma(
+        "Identify the musical note inside the green square, for example: C5 or B6. Return only the name of the note.",
+        img_path,
+    )
+    url = "http://96.224.255.115:8000/note"
+    headers = {"Content-Type": "application/json"}
+    data = {"id": n}
+    print("\n⬅️ Attempting to play note: ", n)
+    response = requests.post(url, headers=headers, data=json.dumps(data))
+    print(response.text)
 
 
 def listen():
