@@ -110,7 +110,7 @@ def listen():
 
 
 if __name__ == "__main__":
-    # listen()
+    listen()
     for i in range(0, 50):
         s = time.time()
         res = inference_paligemma(
