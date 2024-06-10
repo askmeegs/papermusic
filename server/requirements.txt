@@ -1,12 +1,9 @@
-accelerate
-bitsandbytes
-numpy
 opencv-python
-pillow
 python-rtmidi
 requests
 scamp
 scamp_extensions
-swarms
-torch
+torch 
 transformers
+pillow
+swarms
