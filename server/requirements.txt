@@ -1,10 +1,8 @@
 opencv-python
-python-rtmidi
 requests
-scamp
-scamp_extensions
 torch 
 transformers
 pillow
 swarms
 termcolor
+bitsandbytes

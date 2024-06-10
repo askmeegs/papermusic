@@ -1,1 +1,6 @@
 opencv-python
+scamp
+scamp_extensions
+python-rtmidi
+requests
+fastapi
