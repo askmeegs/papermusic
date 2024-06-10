@@ -112,9 +112,9 @@ def listen():
 if __name__ == "__main__":
     # listen()
     for i in range(0, 50):
-        s = time.now()
+        s = time.time()
         res = inference_paligemma(
             "identify the musical instrument.", "framecapture/frame_40.jpg"
         )
-        f = time.now()
+        f = time.time()
         print(f"🔍 Identified instrument: {res} in {f-s} seconds")
