@@ -5,7 +5,7 @@ import numpy as np
 import os
 import signal
 import sys
-
+import time
 import torch
 from transformers import PaliGemmaForConditionalGeneration, AutoProcessor
 from PIL import Image
