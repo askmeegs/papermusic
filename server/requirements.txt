@@ -7,3 +7,4 @@ torch
 transformers
 pillow
 swarms
+termcolor
