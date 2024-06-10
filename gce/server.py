@@ -104,6 +104,10 @@ def listen_for_instrument():
 
     while True:
         try:
+            # Break the loop after 5 seconds
+            if time.time() - start_time > 5:
+                print("⏲️ Instrument ID TIMEOUT")
+                break
             data, address = sock.recvfrom(max_length)
             if len(data) < 100:
                 frame_info = pickle.loads(data)
@@ -138,11 +142,9 @@ def listen_for_instrument():
                         if "success" in resp:
                             print("🎹 Identified instrument: ", resp)
                             break
+        except Exception as e:
+            print("⚠️ error, listen for instrument: ", e)
 
-            # Break the loop after 5 seconds
-            if time.time() - start_time > 5:
-                print("⏲️ Instrument ID TIMEOUT")
-                break
 
 # then afterwards, listen for frames of notes being played, until quit
 def listen_for_notes():
@@ -189,7 +191,7 @@ def listen_for_notes():
                     # if i is a multiple of 10, save frame
                     if j % 10 == 0:
                         # print("🗳️ saving frame {}".format(j))
-                        cv2.imwrite(f"framecapture/frame_{j}.jpg", frame) 
+                        cv2.imwrite(f"framecapture/frame_{j}.jpg", frame)
                         resp = play_note(f"framecapture/frame_{j}.jpg")
                         print(resp)
         except KeyboardInterrupt:
