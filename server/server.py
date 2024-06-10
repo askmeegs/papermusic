@@ -6,6 +6,13 @@ import os
 import signal
 import sys
 
+import torch
+from transformers import PaliGemmaForConditionalGeneration, AutoProcessor
+from PIL import Image
+from transformers import BitsAndBytesConfig
+from swarms import BaseMultiModalModel
+
+
 # configure server info to listen on websocket
 host = "0.0.0.0"
 port = 5000
@@ -20,6 +27,32 @@ def cleanup_and_exit(signal_number, frame):
 
 
 signal.signal(signal.SIGINT, cleanup_and_exit)
+
+
+# load paligemma - quantized for performance optimization
+# using local Nvidia GPU
+hf_token = os.getenv("HUGGINGFACE_USER_ACCESS_TOKEN")
+model_id = "google/paligemma-3b-mix-224"
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_compute_dtype=torch.bfloat16,
+)
+model = PaliGemmaForConditionalGeneration.from_pretrained(
+    model_id,
+    quantization_config=bnb_config,
+    device_map={"": 0},
+)
+processor = AutoProcessor.from_pretrained(model_id)
+
+
+# source:
+# https://medium.com/@kyeg/get-started-with-paligemma-locally-on-cloud-the-all-new-multi-modal-model-from-google-f88a97b9ead6
+def inference_paligemma(prompt, img_path):
+    raw_image = Image.open(img_path)
+    inputs = processor(prompt, raw_image, return_tensors="pt")
+    output = model.generate(**inputs, max_new_tokens=50)
+    return processor.decode(output[0], skip_special_tokens=True)[len(prompt) :]
 
 
 def listen():
@@ -72,4 +105,5 @@ def listen():
 
 
 if __name__ == "__main__":
-    listen()
+    # listen()
+    inference_paligemma("identify the musical instrument.", "framecapture/frame_40.jpg")
