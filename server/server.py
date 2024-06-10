@@ -60,7 +60,7 @@ def listen():
                     frame = cv2.flip(frame, 1)
 
                     if frame is not None and type(frame) == np.ndarray:
-                        cv2.imshow("Stream", frame)
+                        # cv2.imshow("Stream", frame)
                         if cv2.waitKey(1) == 27:
                             break
                     # if i is a multiple of 10, save frame
