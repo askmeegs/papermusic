@@ -9,3 +9,5 @@ bitsandbytes
 accelerate
 fastapi
 pydantic
+imutils
+numpy
