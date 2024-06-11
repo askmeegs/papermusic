@@ -78,6 +78,8 @@ def note():
     )
     # remove all whitespace and punctuation
     n = n.strip().replace(" ", "").replace(",", "").replace(".", "")
+    # convert to all caps
+    n = n.upper()
     print("🎵 Note is: {}".format(n))
     return {"note": n}
 
