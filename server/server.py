@@ -1,18 +1,18 @@
+from fastapi import FastAPI
+from PIL import Image
+from pydantic import BaseModel
+from swarms import BaseMultiModalModel
+from transformers import BitsAndBytesConfig
+from transformers import PaliGemmaForConditionalGeneration, AutoProcessor
+import asyncio
 import cv2
-import socket
-import pickle
 import numpy as np
 import os
+import pickle
 import signal
+import socket
 import sys
-import time
 import torch
-from transformers import PaliGemmaForConditionalGeneration, AutoProcessor
-from PIL import Image
-from transformers import BitsAndBytesConfig
-from swarms import BaseMultiModalModel
-from fastapi import FastAPI
-from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -165,4 +165,5 @@ def listen():
 
 @app.on_event("startup")
 def init():
-    listen()
+    loop = asyncio.get_event_loop()
+    loop.create_task(listen())
