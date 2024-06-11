@@ -114,7 +114,7 @@ def inference_paligemma(prompt, img_path):
 
 
 # continuously write frames from UDP webcam stream to disk
-def listen():
+async def listen():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((host, port))
 
@@ -152,13 +152,14 @@ def listen():
                     frame = cv2.flip(frame, 1)
 
                     if frame is not None and type(frame) == np.ndarray:
+
                         if cv2.waitKey(1) == 27:
                             break
                     # if i is a multiple of 10, save frame
                     if j % 10 == 0:
                         cv2.imwrite(f"framecapture/frame_{j}.jpg", frame)
         except Exception as e:
-            if str(e) == "KeyboardInterrupt":
+            if e == KeyboardInterrupt:
                 cleanup_and_exit(None, None)
             else:
                 print("🚫 Error: ", e)
