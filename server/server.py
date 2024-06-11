@@ -147,18 +147,20 @@ async def listen():
                 continue
 
 
-def cleanup_and_exit(loop):
+loop = None  # global variable to store the event loop
+
+
+@app.on_event("startup")
+async def startup_event():
+    global loop
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(listen())
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    global loop
     print("👋 Quitting server...")
     # for file in os.listdir("framecapture"):
     #   os.remove(f"framecapture/{file}")
     loop.stop()
-
-
-signal.signal(signal.SIGINT, cleanup_and_exit)
-
-
-@app.on_event("startup")
-def init():
-    loop = asyncio.get_event_loop()
-    loop.add_signal_handler(signal.SIGINT, cleanup_and_exit, loop)
-    loop.run_until_complete(listen())

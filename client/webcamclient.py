@@ -2,6 +2,7 @@ import socket
 import cv2
 import struct
 import sys
+import time
 
 # configure recipient host/port (server websocket)
 host = sys.argv[1]
@@ -13,7 +14,6 @@ def send_webcam_stream():
     sock.connect((host, port))
 
     cap = cv2.VideoCapture(0)
-    cap.set(cv2.CAP_PROP_FPS, 1)
     print("➡️ Streaming webcam to: {}:{}...".format(host, port))
 
     ret, frame = cap.read()
@@ -34,7 +34,7 @@ def send_webcam_stream():
             # send the frame
             sock.sendall(buffer)
             print("🟪 Sent frame of buffer_size: {}".format(buffer_size))
-
+        time.sleep(1)
         ret, frame = cap.read()
 
     print("☎️ Quitting client...")
