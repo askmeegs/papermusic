@@ -4,3 +4,5 @@ scamp_extensions
 python-rtmidi
 requests
 pydantic
+numpy
+imutils
