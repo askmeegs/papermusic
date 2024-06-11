@@ -59,14 +59,6 @@ signal.signal(signal.SIGINT, cleanup_and_exit)
 # -------------- SERVER FUNCTIONS  ---------------------------
 
 
-class Note(BaseModel):
-    id: str
-
-
-class Instrument(BaseModel):
-    name: str
-
-
 @app.get("/")
 def index():
     return {"response": "this is the papermusic note-player server"}
@@ -80,16 +72,36 @@ def health():
 # returns cur instrument name
 @app.get("/instrument")
 def instrument():
-    return {"instrument": cur_inst}
+    print("\nENTER /GET INSTRUMENT")
+
+    # get the img_path of the OLDEST frame file in framecapture/
+    # (this is the first frame of the stream)
+    img_path = "framecapture/" + sorted(os.listdir("framecapture"))[0]
+
+    instrument = inference_paligemma(
+        "Identify the musical instrument using 1-2 words", img_path
+    )
+    return {"instrument": instrument}
 
 
 # returns cur note name
 @app.get("/note")
 def note():
-    return {"note": cur_note}
+    print("\nENTER GET /NOTE")
+
+    # get the img_path of the LATEST frame file in framecapture/
+    # (this is the most recent frame of the stream)
+    img_path = "framecapture/" + sorted(os.listdir("framecapture"))[-1]
+
+    n = inference_paligemma(
+        "Identify the musical note inside the green square, for example: C5 or B6. Return only the name of the note.",
+        img_path,
+    )
+
+    return {"note": n}
 
 
-# ------------- PALIGEMMA HELPER FUNCTIONS ---------------------------
+# ------------- PALIGEMMA HELPER FUNCTION ---------------------------
 
 
 # source:
@@ -101,95 +113,8 @@ def inference_paligemma(prompt, img_path):
     return processor.decode(output[0], skip_special_tokens=True)[len(prompt) :]
 
 
-# global vars - current note, and current instrument
-# mac client will continuously poll these values, so that notes can be piped through local audio
-cur_note = "C4"
-cur_inst = "music box"
-
-
-# runs in the first 5 seconds of stream-receive
-def identify_instrument(img_path):
-    print("ENTER IDENTIFY INSTRUMENT")
-    global cur_inst
-    instrument = inference_paligemma(
-        "Identify the musical instrument using 1-2 words", img_path
-    )
-    print("🎹 Setting cur_inst to: ", instrument)
-    cur_inst = instrument
-
-
-# runs continuously as the server receives the mac's UDP video stream.
-# with the ID-ed instrument, play notes based on green square surrounding note on paper instrument
-def play_note(img_path):
-    print("ENTER PLAY NOTE")
-    global cur_note
-    n = inference_paligemma(
-        "Identify the musical note inside the green square, for example: C5 or B6. Return only the name of the note.",
-        img_path,
-    )
-    print("Setting cur_note to: ", n)
-    cur_note = n
-
-
-# for the first 5 seconds, listen for the instrument webcam frames ...
-def listen_for_instrument():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind((host, port))
-    frame_info = None
-    buffer = None
-    frame = None
-    first_receipt = False
-    j = 0
-    print("🎹 Listening UDP for instrument on {}:{}...".format(host, port))
-
-    start_time = time.time()
-
-    while True:
-        try:
-            # Break the loop after 5 seconds
-            if time.time() - start_time > 5:
-                print("⏲️ Instrument ID TIMEOUT")
-                break
-            data, address = sock.recvfrom(max_length)
-            if len(data) < 100:
-                frame_info = pickle.loads(data)
-                if frame_info:
-                    if first_receipt == False:
-                        print("✅ Received stream.")
-                        first_receipt = True
-                    nums_of_packs = frame_info["packs"]
-                    j += 1
-                    for i in range(nums_of_packs):
-                        data, address = sock.recvfrom(max_length)
-
-                        if i == 0:
-                            buffer = data
-                        else:
-                            buffer += data
-
-                    frame = np.frombuffer(buffer, dtype=np.uint8)
-                    frame = frame.reshape(frame.shape[0], 1)
-
-                    frame = cv2.imdecode(frame, cv2.IMREAD_COLOR)
-                    frame = cv2.flip(frame, 1)
-
-                    if frame is not None and type(frame) == np.ndarray:
-                        if cv2.waitKey(1) == 27:
-                            break
-                    # if i is a multiple of 10, save frame
-                    if j % 10 == 0:
-                        cv2.imwrite(f"framecapture/frame_{j}.jpg", frame)
-                        resp = identify_instrument(f"framecapture/frame_{j}.jpg")
-                        print(resp)
-                        if "success" in resp:
-                            print("🎹 Identified instrument: ", resp)
-                            break
-        except Exception as e:
-            print("⚠️ error, listen for instrument: ", e)
-
-
-# then afterwards, listen for frames of notes being played, until quit
-def listen_for_notes():
+# continuously write frames from UDP webcam stream to disk
+def listen():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((host, port))
 
@@ -234,13 +159,10 @@ def listen_for_notes():
                     if j % 10 == 0:
                         # print("🗳️ saving frame {}".format(j))
                         cv2.imwrite(f"framecapture/frame_{j}.jpg", frame)
-                        resp = play_note(f"framecapture/frame_{j}.jpg")
-                        print(resp)
         except KeyboardInterrupt:
             cleanup_and_exit(None, None)
 
 
 @app.on_event("startup")
 def init():
-    listen_for_instrument()
-    listen_for_notes()
+    listen()
