@@ -33,7 +33,7 @@ def send_webcam_stream():
 
             # send the frame
             sock.sendall(buffer)
-            print("🟪 Sent frame of buffer_size: {}: {}".format(buffer_size, frame))
+            print("🟪 Sent frame of buffer_size: {}".format(buffer_size))
 
         ret, frame = cap.read()
 

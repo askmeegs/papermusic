@@ -5,18 +5,13 @@ from swarms import BaseMultiModalModel
 from transformers import BitsAndBytesConfig
 from transformers import PaliGemmaForConditionalGeneration, AutoProcessor
 import asyncio
-import base64
 import cv2
-import imutils
 import numpy as np
 import os
-import pickle
 import signal
-import socket
 import socket
 import struct
 import sys
-import time
 import torch
 
 
@@ -149,15 +144,14 @@ async def listen():
             if e == KeyboardInterrupt:
                 cleanup_and_exit(None, None)
             else:
-                print("🚫 Error: ", e)
                 continue
 
 
-def cleanup_and_exit(signal_number, frame):
+def cleanup_and_exit(loop):
     print("👋 Quitting server...")
     # for file in os.listdir("framecapture"):
     #   os.remove(f"framecapture/{file}")
-    sys.exit()
+    loop.stop()
 
 
 signal.signal(signal.SIGINT, cleanup_and_exit)
@@ -165,4 +159,6 @@ signal.signal(signal.SIGINT, cleanup_and_exit)
 
 @app.on_event("startup")
 def init():
-    asyncio.create_task(listen())
+    loop = asyncio.get_event_loop()
+    loop.add_signal_handler(signal.SIGINT, cleanup_and_exit, loop)
+    loop.run_until_complete(listen())
