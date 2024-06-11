@@ -51,8 +51,6 @@ def health():
 # returns cur instrument name
 @app.get("/instrument")
 def instrument():
-    print("\nENTER /GET INSTRUMENT")
-
     # get the img_path of the OLDEST frame file in framecapture/
     # (this is the first frame of the stream)
     img_path = "framecapture/" + sorted(os.listdir("framecapture"))[0]
@@ -60,14 +58,13 @@ def instrument():
     instrument = inference_paligemma(
         "Identify the musical instrument using 1-2 words", img_path
     )
+    print("🎹 Instrument is: {}".format(instrument))
     return {"instrument": instrument}
 
 
 # returns cur note name
 @app.get("/note")
 def note():
-    print("\nENTER GET /NOTE")
-
     # get the img_path of the LATEST frame file in framecapture/
     # (this is the most recent frame of the stream)
     img_path = "framecapture/" + sorted(os.listdir("framecapture"))[-1]
@@ -76,7 +73,7 @@ def note():
         "Identify the musical note inside the green square, for example: C5 or B6. Return only the name of the note.",
         img_path,
     )
-
+    print("🎵 Note is: {}".format(n))
     return {"note": n}
 
 
