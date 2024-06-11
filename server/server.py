@@ -109,104 +109,104 @@ def inference_paligemma(prompt, img_path):
 
 # continuously write frames from UDP webcam stream to disk
 # source: https://pyshine.com/Send-video-over-UDP-socket-in-Python/
-async def listen():
-    print("attempting to listen for webcam stream...")
-    try:
-        j = 1
-        first_receipt = False
-        BUFF_SIZE = 65536
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
-        host_ip = "35.231.102.158"
-        port = 5000
-        message = b"Hello"
-        client_socket.sendto(message, (host_ip, port))
-        fps, st, frames_to_count, cnt = (0, 0, 20, 0)
-        while True:
-            packet, _ = client_socket.recvfrom(BUFF_SIZE)
-            data = base64.b64decode(packet, " /")
-            npdata = np.fromstring(data, dtype=np.uint8)
-            frame = cv2.imdecode(npdata, 1)
-            if j % 10 == 0:
-                cv2.imwrite(f"framecapture/frame_{j}.jpg", frame)
-            j += 1
-            if not first_receipt:
-                print("✅ RECEIVED FIRST FRAME")
-                first_receipt = True
-            frame = cv2.putText(
-                frame,
-                "FPS: " + str(fps),
-                (10, 40),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                (0, 0, 255),
-                2,
-            )
-
-            # cv2.imshow("RECEIVING VIDEO", frame)
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord("q"):
-                client_socket.close()
-                break
-            if cnt == frames_to_count:
-                try:
-                    fps = round(frames_to_count / (time.time() - st))
-                    st = time.time()
-                    cnt = 0
-                except:
-                    pass
-        cnt += 1
-    except Exception as e:
-        if e == KeyboardInterrupt:
-            print("Exiting...")
-            cleanup_and_exit(None, None)
-        else:
-            print("🚫 Error: ", e)
-            return
-
-
 # async def listen():
-#     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#     sock.bind((host, port))
-#     sock.listen(1)
+#     print("attempting to listen for webcam stream...")
+#     try:
+#         j = 1
+#         first_receipt = False
+#         BUFF_SIZE = 65536
+#         client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+#         client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
+#         host_ip = "35.231.102.158"
+#         port = 5000
+#         message = b"Hello"
+#         client_socket.sendto(message, (host_ip, port))
+#         fps, st, frames_to_count, cnt = (0, 0, 20, 0)
+#         while True:
+#             packet, _ = client_socket.recvfrom(BUFF_SIZE)
+#             data = base64.b64decode(packet, " /")
+#             npdata = np.fromstring(data, dtype=np.uint8)
+#             frame = cv2.imdecode(npdata, 1)
+#             if j % 10 == 0:
+#                 cv2.imwrite(f"framecapture/frame_{j}.jpg", frame)
+#             j += 1
+#             if not first_receipt:
+#                 print("✅ RECEIVED FIRST FRAME")
+#                 first_receipt = True
+#             frame = cv2.putText(
+#                 frame,
+#                 "FPS: " + str(fps),
+#                 (10, 40),
+#                 cv2.FONT_HERSHEY_SIMPLEX,
+#                 0.7,
+#                 (0, 0, 255),
+#                 2,
+#             )
 
-#     print("🤔 Listening for stream {}:{}...".format(host, port))
+#             # cv2.imshow("RECEIVING VIDEO", frame)
+#             key = cv2.waitKey(1) & 0xFF
+#             if key == ord("q"):
+#                 client_socket.close()
+#                 break
+#             if cnt == frames_to_count:
+#                 try:
+#                     fps = round(frames_to_count / (time.time() - st))
+#                     st = time.time()
+#                     cnt = 0
+#                 except:
+#                     pass
+#         cnt += 1
+#     except Exception as e:
+#         if e == KeyboardInterrupt:
+#             print("Exiting...")
+#             cleanup_and_exit(None, None)
+#         else:
+#             print("🚫 Error: ", e)
+#             return
 
-#     conn, addr = sock.accept()
-#     print("✅ Connection from: ", addr)
 
-#     j = 0
-#     while True:
-#         try:
-#             # receive size of the frame
-#             buffer_size = pickle.loads(conn.recv(1024))
+async def listen():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind((host, port))
+    sock.listen(1)
 
-#             # receive the frame
-#             buffer = b""
-#             while len(buffer) < buffer_size:
-#                 packet = conn.recv(buffer_size - len(buffer))
-#                 if not packet:
-#                     break
-#                 buffer += packet
+    print("🤔 Listening for stream {}:{}...".format(host, port))
 
-#             frame = np.frombuffer(buffer, dtype=np.uint8)
-#             frame = cv2.imdecode(frame, cv2.IMREAD_COLOR)
-#             frame = cv2.flip(frame, 1)
+    conn, addr = sock.accept()
+    print("✅ Connection from: ", addr)
 
-#             if frame is not None and type(frame) == np.ndarray:
-#                 if cv2.waitKey(1) == 27:
-#                     break
-#                 # if j is a multiple of 10, save frame
-#                 if j % 10 == 0:
-#                     cv2.imwrite(f"framecapture/frame_{j}.jpg", frame)
-#                 j += 1
+    j = 0
+    while True:
+        try:
+            # receive size of the frame
+            buffer_size = pickle.loads(conn.recv(1024))
 
-#         except Exception as e:
-#             if e == KeyboardInterrupt:
-#                 cleanup_and_exit(None, None)
-#             else:
-#                 print("🚫 Error: ", e)
-#                 continue
+            # receive the frame
+            buffer = b""
+            while len(buffer) < buffer_size:
+                packet = conn.recv(buffer_size - len(buffer))
+                if not packet:
+                    break
+                buffer += packet
+
+            frame = np.frombuffer(buffer, dtype=np.uint8)
+            frame = cv2.imdecode(frame, cv2.IMREAD_COLOR)
+            frame = cv2.flip(frame, 1)
+
+            if frame is not None and type(frame) == np.ndarray:
+                if cv2.waitKey(1) == 27:
+                    break
+                # if j is a multiple of 10, save frame
+                if j % 10 == 0:
+                    cv2.imwrite(f"framecapture/frame_{j}.jpg", frame)
+                j += 1
+
+        except Exception as e:
+            if e == KeyboardInterrupt:
+                cleanup_and_exit(None, None)
+            else:
+                print("🚫 Error: ", e)
+                continue
 
 
 def cleanup_and_exit(signal_number, frame):
