@@ -34,7 +34,7 @@ def send_webcam_stream():
             # send the frame
             sock.sendall(buffer)
             print("🟪 Sent frame of buffer_size: {}".format(buffer_size))
-        time.sleep(1)
+        time.sleep(0.3)
         ret, frame = cap.read()
 
     print("☎️ Quitting client...")

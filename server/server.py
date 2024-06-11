@@ -58,6 +58,9 @@ def instrument():
     instrument = inference_paligemma(
         "Identify the musical instrument using 1-2 words", img_path
     )
+
+    # remove all whitespace and punctuation
+    instrument = instrument.strip().replace(" ", "").replace(",", "").replace(".", "")
     print("🎹 Instrument is: {}".format(instrument))
     return {"instrument": instrument}
 
@@ -73,6 +76,8 @@ def note():
         "Identify the musical note inside the green square, for example: C5 or B6. Return only the name of the note.",
         img_path,
     )
+    # remove all whitespace and punctuation
+    n = n.strip().replace(" ", "").replace(",", "").replace(".", "")
     print("🎵 Note is: {}".format(n))
     return {"note": n}
 
