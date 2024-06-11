@@ -7,7 +7,7 @@ import pickle
 import sys
 
 # configure recipient host/port (server websocket)
-max_length = 1000
+max_length = 65540
 host = sys.argv[1]
 port = 5000
 

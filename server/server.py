@@ -122,7 +122,7 @@ def listen():
     buffer = None
     frame = None
 
-    print("🤔 Listening for note on {}:{}...".format(host, port))
+    print("🤔 Listening for stream {}:{}...".format(host, port))
 
     first_receipt = False
     j = 0
@@ -152,15 +152,17 @@ def listen():
                     frame = cv2.flip(frame, 1)
 
                     if frame is not None and type(frame) == np.ndarray:
-                        # cv2.imshow("Stream", frame)
                         if cv2.waitKey(1) == 27:
                             break
                     # if i is a multiple of 10, save frame
                     if j % 10 == 0:
-                        # print("🗳️ saving frame {}".format(j))
                         cv2.imwrite(f"framecapture/frame_{j}.jpg", frame)
-        except KeyboardInterrupt:
-            cleanup_and_exit(None, None)
+        except Exception as e:
+            if str(e) == "KeyboardInterrupt":
+                cleanup_and_exit(None, None)
+            else:
+                print("🚫 Error: ", e)
+                continue
 
 
 @app.on_event("startup")
