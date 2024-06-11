@@ -104,6 +104,7 @@ def inference_paligemma(prompt, img_path):
 
 
 async def listen():
+    print("enter Listen")
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind((host, port))
     sock.listen(1)
@@ -142,7 +143,6 @@ async def listen():
                 j += 1
 
         except Exception as e:
-            print(e)
             continue
 
 
