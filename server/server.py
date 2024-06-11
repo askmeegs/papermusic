@@ -24,27 +24,27 @@ port = 5000
 max_length = 10000
 
 # verify CUDA (Nvidia GPU) is available
-if not torch.cuda.is_available():
-    print("🚫 No CUDA device available.")
-    sys.exit()
+# if not torch.cuda.is_available():
+#     print("🚫 No CUDA device available.")
+#     sys.exit()
 
 
-# load paligemma - quantized for performance optimization
-# using local Nvidia GPU
-hf_token = os.getenv("HUGGINGFACE_USER_ACCESS_TOKEN")
-model_id = "google/paligemma-3b-mix-224"
-bnb_config = BitsAndBytesConfig(
-    load_in_4bit=True,
-    bnb_4bit_quant_type="nf4",
-    bnb_4bit_compute_dtype=torch.bfloat16,
-)
-model = PaliGemmaForConditionalGeneration.from_pretrained(
-    model_id,
-    quantization_config=bnb_config,
-    device_map={"": 0},
-    token=hf_token,
-)
-processor = AutoProcessor.from_pretrained(model_id, token=hf_token)
+# # load paligemma - quantized for performance optimization
+# # using local Nvidia GPU
+# hf_token = os.getenv("HUGGINGFACE_USER_ACCESS_TOKEN")
+# model_id = "google/paligemma-3b-mix-224"
+# bnb_config = BitsAndBytesConfig(
+#     load_in_4bit=True,
+#     bnb_4bit_quant_type="nf4",
+#     bnb_4bit_compute_dtype=torch.bfloat16,
+# )
+# model = PaliGemmaForConditionalGeneration.from_pretrained(
+#     model_id,
+#     quantization_config=bnb_config,
+#     device_map={"": 0},
+#     token=hf_token,
+# )
+# processor = AutoProcessor.from_pretrained(model_id, token=hf_token)
 
 # -------------- SERVER FUNCTIONS  ---------------------------
 
