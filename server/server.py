@@ -153,7 +153,7 @@ loop = None  # global variable to store the event loop
 async def startup_event():
     global loop
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(listen())
+    asyncio.ensure_future(listen())  # run listen in the background
 
 
 @app.on_event("shutdown")
