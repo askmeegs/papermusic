@@ -110,6 +110,7 @@ def inference_paligemma(prompt, img_path):
 # continuously write frames from UDP webcam stream to disk
 # source: https://pyshine.com/Send-video-over-UDP-socket-in-Python/
 async def listen():
+    print("attempting to listen for webcam stream...")
     try:
         j = 1
         first_receipt = False
@@ -157,6 +158,7 @@ async def listen():
         cnt += 1
     except Exception as e:
         if e == KeyboardInterrupt:
+            print("Exiting...")
             cleanup_and_exit(None, None)
         else:
             print("🚫 Error: ", e)
@@ -219,5 +221,4 @@ signal.signal(signal.SIGINT, cleanup_and_exit)
 
 @app.on_event("startup")
 def init():
-    loop = asyncio.get_event_loop()
-    loop.create_task(listen())
+    asyncio.create_task(listen())
