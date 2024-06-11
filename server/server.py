@@ -73,7 +73,7 @@ def note():
     img_path = "framecapture/" + sorted(os.listdir("framecapture"))[-1]
 
     n = inference_paligemma(
-        "Identify the musical note inside the green square, for example: C5 or B6. Return only the name of the note.",
+        "Identify the musical note inside the green square, along with its octave indicator. For example: A5 or D6. Return only the name of the note.",
         img_path,
     )
     # remove all whitespace and punctuation
