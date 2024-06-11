@@ -116,9 +116,7 @@ async def listen():
         BUFF_SIZE = 65536
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
-        host_name = socket.gethostname()
-        host_ip = socket.gethostbyname(host_name)
-        print(host_ip)
+        host_ip = "35.231.102.158"
         port = 5000
         message = b"Hello"
         client_socket.sendto(message, (host_ip, port))
