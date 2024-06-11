@@ -14,6 +14,7 @@ import pickle
 import signal
 import socket
 import socket
+import struct
 import sys
 import time
 import torch
@@ -107,64 +108,6 @@ def inference_paligemma(prompt, img_path):
     return processor.decode(output[0], skip_special_tokens=True)[len(prompt) :]
 
 
-# continuously write frames from UDP webcam stream to disk
-# source: https://pyshine.com/Send-video-over-UDP-socket-in-Python/
-# async def listen():
-#     print("attempting to listen for webcam stream...")
-#     try:
-#         j = 1
-#         first_receipt = False
-#         BUFF_SIZE = 65536
-#         client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-#         client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
-#         host_ip = "35.231.102.158"
-#         port = 5000
-#         message = b"Hello"
-#         client_socket.sendto(message, (host_ip, port))
-#         fps, st, frames_to_count, cnt = (0, 0, 20, 0)
-#         while True:
-#             packet, _ = client_socket.recvfrom(BUFF_SIZE)
-#             data = base64.b64decode(packet, " /")
-#             npdata = np.fromstring(data, dtype=np.uint8)
-#             frame = cv2.imdecode(npdata, 1)
-#             if j % 10 == 0:
-#                 cv2.imwrite(f"framecapture/frame_{j}.jpg", frame)
-#             j += 1
-#             if not first_receipt:
-#                 print("✅ RECEIVED FIRST FRAME")
-#                 first_receipt = True
-#             frame = cv2.putText(
-#                 frame,
-#                 "FPS: " + str(fps),
-#                 (10, 40),
-#                 cv2.FONT_HERSHEY_SIMPLEX,
-#                 0.7,
-#                 (0, 0, 255),
-#                 2,
-#             )
-
-#             # cv2.imshow("RECEIVING VIDEO", frame)
-#             key = cv2.waitKey(1) & 0xFF
-#             if key == ord("q"):
-#                 client_socket.close()
-#                 break
-#             if cnt == frames_to_count:
-#                 try:
-#                     fps = round(frames_to_count / (time.time() - st))
-#                     st = time.time()
-#                     cnt = 0
-#                 except:
-#                     pass
-#         cnt += 1
-#     except Exception as e:
-#         if e == KeyboardInterrupt:
-#             print("Exiting...")
-#             cleanup_and_exit(None, None)
-#         else:
-#             print("🚫 Error: ", e)
-#             return
-
-
 async def listen():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind((host, port))
@@ -179,7 +122,8 @@ async def listen():
     while True:
         try:
             # receive size of the frame
-            buffer_size = pickle.loads(conn.recv(1024))
+            buffer_size = conn.recv(4)
+            buffer_size = struct.unpack("!I", buffer_size)[0]
 
             # receive the frame
             buffer = b""
