@@ -138,13 +138,12 @@ async def listen():
                 # if j is a multiple of 10, save frame
                 if j % 10 == 0:
                     cv2.imwrite(f"framecapture/frame_{j}.jpg", frame)
+                    print("📸 Saved frame: framecapture/frame_{}.jpg".format(j))
                 j += 1
 
         except Exception as e:
-            if e == KeyboardInterrupt:
-                cleanup_and_exit(None, None)
-            else:
-                continue
+            print(e)
+            continue
 
 
 loop = None  # global variable to store the event loop
