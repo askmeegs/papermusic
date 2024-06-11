@@ -14,6 +14,8 @@ from swarms import BaseMultiModalModel
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+app = FastAPI()
+
 
 # prepare to receive mac webcam stream
 host = "0.0.0.0"
@@ -55,7 +57,6 @@ signal.signal(signal.SIGINT, cleanup_and_exit)
 
 
 # -------------- SERVER FUNCTIONS  ---------------------------
-app = FastAPI()
 
 
 class Note(BaseModel):
@@ -239,6 +240,7 @@ def listen_for_notes():
             cleanup_and_exit(None, None)
 
 
-if __name__ == "__main__":
+@app.on_event("startup")
+def init():
     listen_for_instrument()
     listen_for_notes()

@@ -6,7 +6,7 @@ import requests
 import time
 
 # GCE server URL
-SERVER_URL = "http://localhost:8000"
+SERVER_URL = "http://35.231.102.158:8000"
 
 
 # configure music generation
@@ -90,7 +90,6 @@ def play_note():
     if note_id in ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]:
         note_id += "4"
     if note_id in nm:
-        inst = s.new_part(inst_name)
         midinote = nm[note_id]
         inst.play_note(midinote, 1, 1, {"articulations": ["staccato"]})
     else:

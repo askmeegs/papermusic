@@ -1,4 +1,4 @@
-#!/Users/mokeefe/dev/papermusic/mac/bin/python3.12
+#!/Users/mokeefe/dev/papermusic/client/bin/python3.12
 # -*- coding: utf-8 -*-
 import re
 import sys
