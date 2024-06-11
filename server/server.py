@@ -115,49 +115,41 @@ def inference_paligemma(prompt, img_path):
 
 # continuously write frames from UDP webcam stream to disk
 async def listen():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind((host, port))
-
-    frame_info = None
-    buffer = None
-    frame = None
+    sock.listen(1)
 
     print("🤔 Listening for stream {}:{}...".format(host, port))
 
-    first_receipt = False
+    conn, addr = sock.accept()
+    print("✅ Connection from: ", addr)
+
     j = 0
     while True:
         try:
-            data, address = sock.recvfrom(max_length)
-            if len(data) < 100:
-                frame_info = pickle.loads(data)
-                if frame_info:
-                    if first_receipt == False:
-                        print("✅ Received stream.")
-                        first_receipt = True
-                    nums_of_packs = frame_info["packs"]
-                    j += 1
-                    for i in range(nums_of_packs):
-                        data, address = sock.recvfrom(max_length)
+            # receive size of the frame
+            buffer_size = pickle.loads(conn.recv(1024))
 
-                        if i == 0:
-                            buffer = data
-                        else:
-                            buffer += data
+            # receive the frame
+            buffer = b""
+            while len(buffer) < buffer_size:
+                packet = conn.recv(buffer_size - len(buffer))
+                if not packet:
+                    break
+                buffer += packet
 
-                    frame = np.frombuffer(buffer, dtype=np.uint8)
-                    frame = frame.reshape(frame.shape[0], 1)
+            frame = np.frombuffer(buffer, dtype=np.uint8)
+            frame = cv2.imdecode(frame, cv2.IMREAD_COLOR)
+            frame = cv2.flip(frame, 1)
 
-                    frame = cv2.imdecode(frame, cv2.IMREAD_COLOR)
-                    frame = cv2.flip(frame, 1)
+            if frame is not None and type(frame) == np.ndarray:
+                if cv2.waitKey(1) == 27:
+                    break
+                # if j is a multiple of 10, save frame
+                if j % 10 == 0:
+                    cv2.imwrite(f"framecapture/frame_{j}.jpg", frame)
+                j += 1
 
-                    if frame is not None and type(frame) == np.ndarray:
-
-                        if cv2.waitKey(1) == 27:
-                            break
-                    # if i is a multiple of 10, save frame
-                    if j % 10 == 0:
-                        cv2.imwrite(f"framecapture/frame_{j}.jpg", frame)
         except Exception as e:
             if e == KeyboardInterrupt:
                 cleanup_and_exit(None, None)
