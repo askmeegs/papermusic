@@ -5,18 +5,6 @@ draw an instrument, and play it! (fun with [PaliGemma](https://ai.google.dev/gem
 ![](images/screenshot.png)  
 
 
-## v2 - Cloud Workstation (w/ Nvidia GPUs), + "local" Paligemma, + "actually local" webcam streamed via VLC 
-
-https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_gui/py_video_display/py_video_display.html
-
-```
-ffmpeg -i udp://127.0.0.1:8000 -c copy output.mp4
-```
-
---------
-
-**[📹 Video walkthrough]()**
-
 ### 🖥️ how to run 
 
 *Note: this is a prototype. It has only been tested on a Debian Linux machine with Nvidia L4 GPUs (CUDA). Apple Silicon GPUs are not yet supported.*

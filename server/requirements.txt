@@ -7,3 +7,5 @@ swarms
 termcolor
 bitsandbytes
 accelerate
+fastapi
+pydantic

@@ -11,28 +11,19 @@ from transformers import PaliGemmaForConditionalGeneration, AutoProcessor
 from PIL import Image
 from transformers import BitsAndBytesConfig
 from swarms import BaseMultiModalModel
-import requests
-import json
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+
+# prepare to receive mac webcam stream
+host = "0.0.0.0"
+port = 5000
+max_length = 10000
 
 # verify CUDA (Nvidia GPU) is available
 if not torch.cuda.is_available():
     print("🚫 No CUDA device available.")
     sys.exit()
-
-# configure server info to listen on websocket
-host = "0.0.0.0"
-port = 5000
-max_length = 10000
-
-
-def cleanup_and_exit(signal_number, frame):
-    print("👋 Quitting server...")
-    for file in os.listdir("framecapture"):
-        os.remove(f"framecapture/{file}")
-    sys.exit()
-
-
-signal.signal(signal.SIGINT, cleanup_and_exit)
 
 
 # load paligemma - quantized for performance optimization
@@ -53,6 +44,53 @@ model = PaliGemmaForConditionalGeneration.from_pretrained(
 processor = AutoProcessor.from_pretrained(model_id, token=hf_token)
 
 
+def cleanup_and_exit(signal_number, frame):
+    print("👋 Quitting server...")
+    for file in os.listdir("framecapture"):
+        os.remove(f"framecapture/{file}")
+    sys.exit()
+
+
+signal.signal(signal.SIGINT, cleanup_and_exit)
+
+
+# -------------- SERVER FUNCTIONS  ---------------------------
+app = FastAPI()
+
+
+class Note(BaseModel):
+    id: str
+
+
+class Instrument(BaseModel):
+    name: str
+
+
+@app.get("/")
+def index():
+    return {"response": "this is the papermusic note-player server"}
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
+# returns cur instrument name
+@app.get("/instrument")
+def instrument():
+    return {"instrument": cur_inst}
+
+
+# returns cur note name
+@app.get("/note")
+def note():
+    return {"note": cur_note}
+
+
+# ------------- PALIGEMMA HELPER FUNCTIONS ---------------------------
+
+
 # source:
 # https://medium.com/@kyeg/get-started-with-paligemma-locally-on-cloud-the-all-new-multi-modal-model-from-google-f88a97b9ead6
 def inference_paligemma(prompt, img_path):
@@ -62,31 +100,34 @@ def inference_paligemma(prompt, img_path):
     return processor.decode(output[0], skip_special_tokens=True)[len(prompt) :]
 
 
+# global vars - current note, and current instrument
+# mac client will continuously poll these values, so that notes can be piped through local audio
+cur_note = "C4"
+cur_inst = "music box"
+
+
 # runs in the first 5 seconds of stream-receive
 def identify_instrument(img_path):
+    print("ENTER IDENTIFY INSTRUMENT")
+    global cur_inst
     instrument = inference_paligemma(
         "Identify the musical instrument using 1-2 words", img_path
     )
-    url = "http://96.224.255.115:8000/note"
-    headers = {"Content-Type": "application/json"}
-    data = {"name": instrument}
-    print("\n⬅️ Attempting to play note: ", n)
-    response = requests.post(url, headers=headers, data=json.dumps(data))
-    print(response.text)
+    print("🎹 Setting cur_inst to: ", instrument)
+    cur_inst = instrument
 
 
-# once instrument is ID-ed, play notes based on green square surrounding note on paper instrument
+# runs continuously as the server receives the mac's UDP video stream.
+# with the ID-ed instrument, play notes based on green square surrounding note on paper instrument
 def play_note(img_path):
+    print("ENTER PLAY NOTE")
+    global cur_note
     n = inference_paligemma(
         "Identify the musical note inside the green square, for example: C5 or B6. Return only the name of the note.",
         img_path,
     )
-    url = "http://96.224.255.115:8000/note"
-    headers = {"Content-Type": "application/json"}
-    data = {"id": n}
-    print("\n⬅️ Attempting to play note: ", n)
-    response = requests.post(url, headers=headers, data=json.dumps(data))
-    print(response.text)
+    print("Setting cur_note to: ", n)
+    cur_note = n
 
 
 # for the first 5 seconds, listen for the instrument webcam frames ...
@@ -155,7 +196,7 @@ def listen_for_notes():
     buffer = None
     frame = None
 
-    print("🤔 Listening on {}:{}, waiting for connection...".format(host, port))
+    print("🤔 Listening for note on {}:{}...".format(host, port))
 
     first_receipt = False
     j = 0
