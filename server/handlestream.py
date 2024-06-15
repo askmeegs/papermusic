@@ -45,8 +45,8 @@ async def listen():
             if frame is not None and type(frame) == np.ndarray:
                 if cv2.waitKey(1) == 27:
                     break
-                # if j is a multiple of 5, save frame
-                if j % 5 == 0:
+                # if j is a multiple of 2, save frame
+                if j % 2 == 0:
                     cv2.imwrite(f"framecapture/frame_{j}.jpg", frame)
                     print("📸 Saved frame: framecapture/frame_{}.jpg".format(j))
                 j += 1

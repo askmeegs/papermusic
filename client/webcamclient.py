@@ -40,7 +40,7 @@ def send_webcam_stream():
                 # print("🟪 Sent frame of buffer_size: {}".format(buffer_size))
 
             ret, frame = cap.read()
-            time.sleep(0.5)
+            time.sleep(0.2)
         except Exception as e:
             print("❌ Error sending frame... {}".format(e))
             continue
