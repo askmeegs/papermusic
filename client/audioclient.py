@@ -73,10 +73,11 @@ nm = {
 def set_instrument():
     global inst
     # HTTP requests to GCE server
-    response = requests.get(SERVER_URL + "/instrument")
-    inst_name = response.json()["instrument"]
-    print("🎹 PaliGemma identified the instrument as: ", inst_name)
-    inst = s.new_part(inst_name)
+    # response = requests.get(SERVER_URL + "/instrument")
+    # inst_name = response.json()["instrument"]
+    # print("🎹 PaliGemma identified the instrument as: ", inst_name)
+    # inst = s.new_part(inst_name)
+    inst = s.new_part("xylophone")
 
 
 # https://scamp.marcevanstein.com/narrative/note_properties.html

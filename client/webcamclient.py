@@ -14,7 +14,7 @@ def send_webcam_stream():
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((host, port))
         print("📡 Connected to server: {}:{}".format(host, port))
-        cap = cv2.VideoCapture(1)
+        cap = cv2.VideoCapture(0)
         print("➡️ Streaming webcam to: {}:{}...".format(host, port))
         ret, frame = cap.read()
     except Exception as e:
@@ -40,7 +40,6 @@ def send_webcam_stream():
                 # print("🟪 Sent frame of buffer_size: {}".format(buffer_size))
 
             ret, frame = cap.read()
-            time.sleep(0.2)
         except Exception as e:
             print("❌ Error sending frame... {}".format(e))
             continue

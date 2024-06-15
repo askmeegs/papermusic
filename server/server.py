@@ -73,21 +73,21 @@ def note():
     # get the img_path of the LATEST frame file in framecapture/
     # (this is the most recent frame of the stream)
     img_path = "framecapture/" + sorted(os.listdir("framecapture"))[-1]
-
+    print("\n PaliGemma reading frame: " + img_path)
     start_time = time.time()
     n = inference_paligemma(
-        "Identify the musical note inside the green square, along with its octave indicator. For example: A5 or D6. Return only the name of the note.",
+        "Identify the musical note INSIDE the green rectangle, for example: C, D, E, F, G, A, or B. Return ONLY the name of the note.",
         img_path,
     )
     end_time = time.time()
     elapsed_time = end_time - start_time
-    print("⏲️ PaliGemma local inference in: {:.2f} seconds".format(elapsed_time))
+    print("Local inference in: {:.2f} seconds".format(elapsed_time))
 
     # remove all whitespace and punctuation
     n = n.strip().replace(" ", "").replace(",", "").replace(".", "")
     # convert to all caps
     n = n.upper()
-    print("🎵 Note is: {}".format(n))
+    print("🎵 Identified: {}".format(n))
     return {"note": n}
 
 
