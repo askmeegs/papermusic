@@ -2,7 +2,11 @@
 
 draw an instrument, and play it! (fun with [PaliGemma](https://ai.google.dev/gemma/docs/paligemma) and [SCAMP](http://scamp.marcevanstein.com/))
 
-[![Video walkthrough](https://i.sstatic.net/Vp2cE.png)](https://youtu.be/Gxjok5h7HIU)
+### video walkthrough 
+
+(click to play)
+
+[![Video Walkthrough](https://img.youtube.com/vi/Gxjok5h7HIU/maxresdefault.jpg)](https://youtu.be/Gxjok5h7HIU)
 
 ([📺 Original implementation](https://www.youtube.com/watch?v=G5sSaLUskis&t=1s))
 
