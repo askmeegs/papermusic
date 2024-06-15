@@ -75,7 +75,7 @@ def set_instrument():
     # HTTP requests to GCE server
     response = requests.get(SERVER_URL + "/instrument")
     inst_name = response.json()["instrument"]
-    print("🎹 Server said instrument is: ", inst_name)
+    print("🎹 PaliGemma identified the instrument as: ", inst_name)
     inst = s.new_part(inst_name)
 
 
@@ -85,15 +85,15 @@ def play_note():
     # HTTP requests to GCE server
     response = requests.get(SERVER_URL + "/note")
     note_id = response.json()["note"]
-    print("🎵 Server said note is: ", note_id)
     # if PaliGemma IDed a note without an octave, add default octave
     if note_id in ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]:
         note_id += "4"
     if note_id in nm:
+        print("🔈 PLAYING: ", note_id)
         midinote = nm[note_id]
         inst.play_note(midinote, 1, 1, {"articulations": ["staccato"]})
     else:
-        print("🤔 unrecognized note {}, playing silence".format(note_id))
+        print("🤫 Unrecognized note: {}".format(note_id))
 
 
 def run_client():

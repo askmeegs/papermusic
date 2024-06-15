@@ -7,6 +7,7 @@ from transformers import PaliGemmaForConditionalGeneration, AutoProcessor
 import numpy as np
 import os
 import sys
+import time
 import torch
 
 
@@ -16,16 +17,17 @@ app = FastAPI()
 if not torch.cuda.is_available():
     print("🚫 No CUDA device available.")
     sys.exit()
+else:
+    print("✅ NVIDIA CUDA device available. Loading model...")
 
 
 # load paligemma - quantized for performance optimization
-# using local Nvidia GPU
 hf_token = os.getenv("HUGGINGFACE_USER_ACCESS_TOKEN")
 model_id = "google/paligemma-3b-mix-224"
 bnb_config = BitsAndBytesConfig(
-    load_in_4bit=True,
+    load_in_4bit=True,  # 4 bit precision
     bnb_4bit_quant_type="nf4",
-    bnb_4bit_compute_dtype=torch.bfloat16,
+    bnb_4bit_compute_dtype=torch.bfloat16,  # computation datatype
 )
 model = PaliGemmaForConditionalGeneration.from_pretrained(
     model_id,
@@ -34,7 +36,7 @@ model = PaliGemmaForConditionalGeneration.from_pretrained(
     token=hf_token,
 )
 processor = AutoProcessor.from_pretrained(model_id, token=hf_token)
-
+print("✅ PaliGemma model loaded.")
 # -------------- SERVER FUNCTIONS  ---------------------------
 
 
@@ -72,10 +74,15 @@ def note():
     # (this is the most recent frame of the stream)
     img_path = "framecapture/" + sorted(os.listdir("framecapture"))[-1]
 
+    start_time = time.time()
     n = inference_paligemma(
         "Identify the musical note inside the green square, along with its octave indicator. For example: A5 or D6. Return only the name of the note.",
         img_path,
     )
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print("⏲️ PaliGemma local inference in: {:.2f} seconds".format(elapsed_time))
+
     # remove all whitespace and punctuation
     n = n.strip().replace(" ", "").replace(",", "").replace(".", "")
     # convert to all caps
