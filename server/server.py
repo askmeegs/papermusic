@@ -6,6 +6,7 @@ from transformers import BitsAndBytesConfig
 from transformers import PaliGemmaForConditionalGeneration, AutoProcessor
 import numpy as np
 import os
+import glob
 import sys
 import time
 import torch
@@ -70,9 +71,10 @@ def instrument():
 # returns cur note name
 @app.get("/note")
 def note():
-    # get the img_path of the LATEST frame file in framecapture/
-    # (this is the most recent frame of the stream)
-    img_path = "framecapture/" + sorted(os.listdir("framecapture"))[-1]
+    # get the most recently-streamed frame
+    list_of_files = glob.glob("framecapture/*")
+    img_path = max(list_of_files, key=os.path.getctime)
+
     print("\n PaliGemma reading frame: " + img_path)
     start_time = time.time()
     n = inference_paligemma(

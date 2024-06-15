@@ -1,8 +1,8 @@
+imutils
+numpy
 opencv-python
-scamp
-scamp_extensions
+pydantic
 python-rtmidi
 requests
-pydantic
-numpy
-imutils
+scamp
+scamp_extensions
