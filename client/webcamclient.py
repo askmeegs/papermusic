@@ -19,6 +19,7 @@ def send_webcam_stream():
     ret, frame = cap.read()
 
     while ret:
+        print("Sending...")
         # compress frame
         retval, buffer = cv2.imencode(".jpg", frame)
 
@@ -33,8 +34,8 @@ def send_webcam_stream():
 
             # send the frame
             sock.sendall(buffer)
-            print("🟪 Sent frame of buffer_size: {}".format(buffer_size))
-        time.sleep(0.3)
+            # print("🟪 Sent frame of buffer_size: {}".format(buffer_size))
+
         ret, frame = cap.read()
 
     print("☎️ Quitting client...")
